@@ -5,5 +5,5 @@ WORKDIR /usr/src/app
 COPY . .
 
 RUN pip install Pillow
-RUN pip install Requests
+
 CMD [ "python", "./server.py" ]

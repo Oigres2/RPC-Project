@@ -2,17 +2,30 @@ import xmlrpc.client
 import base64
 import tkinter as tk
 from tkinter import filedialog
+from PIL import Image
+from io import BytesIO
+import os
+
+root = tk.Tk()
+root.withdraw() 
 
 def select_image():
+    root.wm_attributes('-topmost', 1) 
     file_path = filedialog.askopenfilename()
+    root.wm_attributes('-topmost', 0)
     if file_path:
         return file_path
     return None
+
+def save_image(data, operation, image_name):
+    with open(f"{image_name}_{operation}.jpg", "wb") as f:
+        f.write(base64.b64decode(data))
 
 def main():
     proxy = xmlrpc.client.ServerProxy("http://localhost:8000/")
 
     while True:
+        os.system('cls')
         print("Escolha uma operação:")
         print("1. Grayscale")
         print("2. Redimensionar")
@@ -30,36 +43,28 @@ def main():
                     encoded_image_data = base64.b64encode(f.read()).decode('utf-8')
 
                 if choice == '1':
-                    task_id = proxy.create_image_processing_task(encoded_image_data, 'grayscale')
+                    result = proxy.convert_to_grayscale(encoded_image_data)
+                    operation = 'grayscale'
                 elif choice == '2':
                     width = int(input("Nova largura: "))
                     height = int(input("Nova altura: "))
-                    task_id = proxy.create_image_processing_task(encoded_image_data, 'resize', width, height)
+                    result = proxy.resize_image(encoded_image_data, width, height)
+                    operation = 'resize'
                 elif choice == '3':
                     angle = float(input("Ângulo de rotação (em graus): "))
-                    task_id = proxy.create_image_processing_task(encoded_image_data, 'rotate', angle)
+                    result = proxy.rotate_image(encoded_image_data, angle)
+                    operation = 'rotate'
 
-                print("Tarefa criada com ID:", task_id)
-
-                while True:
-                    task_status = proxy.get_task_status(task_id)
-                    status = task_status.get('status', 'unknown')
-                    if status == 'completed':
-                        result = task_status.get('result', '')
-                        if result:
-                            with open("processed_image.jpg", "wb") as f:
-                                f.write(base64.b64decode(result))
-                            print("Tarefa concluída. Imagem processada salva como 'processed_image.jpg'.")
-                        break
-                    elif status == 'error':
-                        print("Erro:", task_status.get('result', 'Erro desconhecido'))
-                        break
+                if result:
+                    save_image(result, operation, image_path.split('.')[0])
+                    print(f"Operação concluída. Imagem processada salva como '{image_path.split('.')[0]}_{operation}.jpg'.")
+                    input("Pressione 'Enter' para continuar para o menu")
+                else:
+                    print("Ocorreu um erro durante o processamento.")
             else:
                 print("O arquivo de imagem não foi encontrado.")
         else:
             print("Opção inválida. Tente novamente.")
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    root.withdraw()  # Esconder a janela principal do Tkinter
     main()
