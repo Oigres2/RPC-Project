@@ -2,23 +2,21 @@ import xmlrpc.client
 import base64
 import tkinter as tk
 from tkinter import filedialog
-from PIL import Image
-from io import BytesIO
-import os
+import os 
 
 root = tk.Tk()
-root.withdraw() 
+root.withdraw()
 
 def select_image():
-    root.wm_attributes('-topmost', 1) 
+    root.wm_attributes('-topmost', 1)
     file_path = filedialog.askopenfilename()
     root.wm_attributes('-topmost', 0)
     if file_path:
         return file_path
     return None
 
-def save_image(data, operation, image_name):
-    with open(f"{image_name}_{operation}.jpg", "wb") as f:
+def save_image(data, image_name):
+    with open(image_name, "wb") as f:
         f.write(base64.b64decode(data))
 
 def main():
@@ -30,6 +28,7 @@ def main():
         print("1. Grayscale")
         print("2. Redimensionar")
         print("3. Rotacionar")
+        print("4. Consultar Status da Tarefa")
         print("0. Sair")
         choice = input("Opção: ")
 
@@ -43,26 +42,38 @@ def main():
                     encoded_image_data = base64.b64encode(f.read()).decode('utf-8')
 
                 if choice == '1':
-                    result = proxy.convert_to_grayscale(encoded_image_data)
                     operation = 'grayscale'
+                    task_id = proxy.create_image_processing_task(encoded_image_data, operation)
                 elif choice == '2':
+                    operation = 'resize'
                     width = int(input("Nova largura: "))
                     height = int(input("Nova altura: "))
-                    result = proxy.resize_image(encoded_image_data, width, height)
-                    operation = 'resize'
+                    task_id = proxy.create_image_processing_task(encoded_image_data, operation, width, height)
                 elif choice == '3':
-                    angle = float(input("Ângulo de rotação (em graus): "))
-                    result = proxy.rotate_image(encoded_image_data, angle)
                     operation = 'rotate'
+                    angle = float(input("Ângulo de rotação (em graus): "))
+                    task_id = proxy.create_image_processing_task(encoded_image_data, operation, angle)
 
-                if result:
-                    save_image(result, operation, image_path.split('.')[0])
-                    print(f"Operação concluída. Imagem processada salva como '{image_path.split('.')[0]}_{operation}.jpg'.")
-                    input("Pressione 'Enter' para continuar para o menu")
-                else:
-                    print("Ocorreu um erro durante o processamento.")
+                print(f"Tarefa de processamento de imagem criada. ID da tarefa: {task_id}")
+
+                input("Pressione 'Enter' para continuar para o menu")
             else:
                 print("O arquivo de imagem não foi encontrado.")
+        elif choice == '4':
+            task_id = input("Digite o ID da tarefa: ")
+            task_info = proxy.get_task_status(int(task_id))
+
+            if task_info['status'] == 'completed':
+                result_data = task_info['result']
+                image_name = f"processed_image_{task_id}.jpg"
+                save_image(result_data, image_name)
+                print(f"Operação concluída. Imagem processada salva como '{image_name}'.")
+            elif task_info['status'] == 'processing':
+                print("A tarefa está em andamento.")
+            elif task_info['status'] == 'not_found':
+                print("Tarefa não encontrada.")
+
+            input("Pressione 'Enter' para continuar para o menu")
         else:
             print("Opção inválida. Tente novamente.")
 
