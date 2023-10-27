@@ -63,14 +63,14 @@ def main():
             task_id = input("Digite o ID da tarefa: ")
             task_info = proxy.get_task_status(int(task_id))
 
-            if task_info['status'] == 'completed':
+            if task_info['status'] == 'Finalizado':
                 result_data = task_info['result']
                 image_name = f"processed_image_{task_id}.jpg"
                 save_image(result_data, image_name)
                 print(f"Operação concluída. Imagem processada salva como '{image_name}'.")
-            elif task_info['status'] == 'processing':
+            elif task_info['status'] == 'processar':
                 print("A tarefa está em andamento.")
-            elif task_info['status'] == 'not_found':
+            elif task_info['status'] == 'Nao_encontrado':
                 print("Tarefa não encontrada.")
 
             input("Pressione 'Enter' para continuar para o menu")

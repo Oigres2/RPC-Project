@@ -14,7 +14,7 @@ thread_pool = ThreadPoolExecutor(max_workers=100)
 
 def create_image_processing_task(encoded_image, operation, *args):
     task_id = len(TASKS) + 1
-    TASKS[task_id] = {'status': 'A processar'}
+    TASKS[task_id] = {'status': 'processar'}
 
     task_queue.put((task_id, encoded_image, operation, args))
 
@@ -48,7 +48,7 @@ def get_task_status(task_id):
     if task_id in TASKS:
         return TASKS[task_id]
     else:
-        return {'status': 'Não Encontrado'}
+        return {'status': 'Nao_encontrado'}
 
 processing_thread = threading.Thread(target=process_image)
 processing_thread.daemon = True
